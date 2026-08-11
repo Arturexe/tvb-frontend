@@ -1,0 +1,19 @@
+<script setup>
+const props = defineProps({
+  submission: { type: Object, required: true },
+  certificateImage: { type: String, required: true },
+})
+
+const certificateNumber = ref('')
+const verificationResult = ref(null)
+
+function verifyCertificate() {
+  verificationResult.value = !certificateNumber.value || certificateNumber.value.toUpperCase() === props.submission.id
+    ? 'found'
+    : 'not-found'
+}
+</script>
+
+<template>
+  <section class="min-h-screen px-6 pb-20 pt-24"><div class="mx-auto max-w-2xl"><div class="mb-12 text-center"><svg width="52" height="47" viewBox="0 0 56 50" fill="none" class="inline"><text x="4" y="42" font-size="42" font-family="Playfair Display, serif" font-weight="600" fill="#9a7840" style="letter-spacing: -6px">TVB</text><rect x="1" y="1" width="54" height="48" stroke="#9a7840" stroke-width="1.5" /></svg><h1 class="mb-3 mt-4 font-display text-3xl font-semibold">Certificate Verification</h1><p class="font-sans-dm text-sm text-(--muted-foreground)">Enter a certificate number to verify its authenticity and view the full record.</p></div><div class="border border-(--border) bg-(--card) p-8"><label><span class="small-caps mb-3 block font-sans-dm text-xs text-(--muted-foreground)">Certificate Number</span><span class="flex"><input v-model="certificateNumber" placeholder="e.g. TVB-LV-2026-001248" class="min-w-0 flex-1 border border-r-0 border-(--border) bg-(--background) px-4 py-3 font-sans-dm text-sm" @keyup.enter="verifyCertificate"><button class="border border-(--primary) bg-(--primary) px-6 py-3 font-sans-dm text-sm text-(--primary-foreground)" @click="verifyCertificate">Verify</button></span></label><p class="mt-3 font-sans-dm text-xs text-(--muted-foreground)">Try: <button class="underline text-(--primary)" @click="certificateNumber = submission.id; verificationResult = null">{{ submission.id }}</button></p></div><article v-if="verificationResult === 'not-found'" class="mt-6 border border-(--border) bg-(--card) p-6 text-center"><p class="font-sans-dm text-sm text-(--muted-foreground)">No certificate found for</p><p class="font-display text-lg font-semibold">{{ certificateNumber }}</p><p class="mt-3 font-sans-dm text-xs text-(--muted-foreground)">Please check the number and try again.</p></article><article v-else-if="verificationResult === 'found'" class="mt-6 border border-(--border) bg-(--card) p-8 text-center outline outline-4 outline-(--background) outline-offset-[-10px] md:p-10"><p class="small-caps inline-flex items-center gap-2 bg-[rgba(154,120,64,.12)] px-4 py-1.5 font-sans-dm text-xs text-(--primary)"><i class="h-1.5 w-1.5 rotate-45 bg-(--primary)" />Certificate Verified</p><h2 class="mt-8 font-display text-xl font-semibold tracking-[.2em]">THE VERIFIED BAG</h2><p class="mt-1 font-sans-dm text-[10px] tracking-widest text-(--primary)">INDEPENDENT AUTHENTICATION CERTIFICATE</p><div class="rule-gold my-8" /><p v-for="entry in [{l:'Certificate No.',v:submission.id},{l:'Issue Date',v:submission.date},{l:'Brand',v:submission.brand},{l:'Item',v:submission.item},{l:'Result',v:'AUTHENTIC'}]" :key="entry.l" class="flex border-b border-(--border) py-3.5 text-left"><span class="small-caps w-2/5 font-sans-dm text-xs text-(--primary)">{{ entry.l }}</span><span class="flex-1 font-sans-dm text-sm" :class="entry.l === 'Result' ? 'font-display font-semibold text-(--primary)' : ''">{{ entry.v }}</span></p><div class="rule-gold my-8" /><p class="mx-auto max-w-sm font-sans-dm text-xs italic leading-relaxed text-(--muted-foreground)">This certificate was issued by The Verified Bag, an independent authentication service not affiliated with any brand.</p><img :src="certificateImage" alt="Authentication certificate" class="mx-auto mt-6 w-full max-w-[280px] border border-(--border) p-1" /></article></div></section>
+</template>

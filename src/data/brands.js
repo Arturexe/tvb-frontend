@@ -1,0 +1,1 @@
+export const brands = ['Louis Vuitton', 'Chanel', 'Hermes', 'Gucci', 'Prada', 'Dior', 'Bottega Veneta', 'Celine']
