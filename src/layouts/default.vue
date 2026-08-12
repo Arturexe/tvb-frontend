@@ -1,12 +1,13 @@
 <script setup>
 
 const route = useRoute()
-const showFooter = computed(() => !['/login', '/register'].includes(route.path))
+const isAdminRoute = computed(() => route.path.startsWith('/admin'))
+const showFooter = computed(() => !isAdminRoute.value && !['/login', '/register'].includes(route.path))
 </script>
 
 <template>
     <div class="min-h-screen bg-(--background)">
-        <app-header />
+        <app-header v-if="!isAdminRoute" />
 
         <slot />
 
