@@ -12,12 +12,10 @@ const isLoading = ref(true)
 const isCompleting = ref(false)
 const isConfirming = ref(false)
 const isRequestingPhotos = ref(false)
-const isReturningToQueue = ref(false)
-const isReturnConfirming = ref(false)
 const photoLoadError = ref('')
 
-const isReviewing = computed(
-    () => authenticationCase.value?.status === 'reviewing'
+const isCompleted = computed(
+    () => authenticationCase.value?.status === 'completed'
 )
 const photos = computed(() => {
     const record = authenticationCase.value || {}
@@ -156,25 +154,6 @@ async function requestMorePhotos() {
     }
 }
 
-async function returnToQueue() {
-    error.value = ''
-    isReturningToQueue.value = true
-
-    try {
-        await api.returnAuthenticationCaseToQueue(
-            authenticationCase.value.public_id
-        )
-        isReturnConfirming.value = false
-        await router.push(
-            `/admin/authentication/${encodeURIComponent(authenticationCase.value.public_id)}`
-        )
-    } catch (requestError) {
-        await handleError(requestError)
-    } finally {
-        isReturningToQueue.value = false
-    }
-}
-
 async function logout() {
     try {
         await api.logout()
@@ -245,7 +224,7 @@ watch(
                 class="border border-red-200 bg-red-50 p-6 text-sm text-red-700">
                 {{ error }}
             </p>
-            <section v-else-if="authenticationCase && isReviewing">
+            <section v-else-if="authenticationCase && !isCompleted">
                 <div class="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                     <div>
                         <p class="small-caps text-xs text-(--primary)">
@@ -318,14 +297,14 @@ watch(
                                 </label>
                             </div>
                             <button
-                                :disabled="isCompleting || isRequestingPhotos || isReturningToQueue"
+                                :disabled="isCompleting || isRequestingPhotos"
                                 class="mt-6 w-full bg-(--primary) px-5 py-3 text-sm text-(--primary-foreground) disabled:opacity-60"
                                 type="submit">
                                 Review completion
                             </button>
                             <button
                                 type="button"
-                                :disabled="isCompleting || isRequestingPhotos || isReturningToQueue"
+                                :disabled="isCompleting || isRequestingPhotos"
                                 class="mt-3 w-full border border-(--border) px-5 py-3 text-sm text-(--primary) disabled:opacity-60"
                                 @click="requestMorePhotos">
                                 {{
@@ -333,13 +312,6 @@ watch(
                                         ? 'Requesting...'
                                         : 'Request more photos'
                                 }}
-                            </button>
-                            <button
-                                type="button"
-                                :disabled="isCompleting || isRequestingPhotos || isReturningToQueue"
-                                class="mt-3 w-full border border-(--border) px-5 py-3 text-sm text-(--primary) disabled:opacity-60"
-                                @click="isReturnConfirming = true">
-                                Return to queue
                             </button>
                         </form>
                     </section>
@@ -365,17 +337,6 @@ watch(
                 {{ formatStatus(result) }}
             </span>
             .
-        </confirmation-dialog>
-        <confirmation-dialog
-            :open="isReturnConfirming"
-            title="Return this authentication case to the queue?"
-            confirm-label="Confirm return"
-            busy-label="Returning..."
-            :busy="isReturningToQueue"
-            @confirm="returnToQueue"
-            @cancel="isReturnConfirming = false">
-            The active review will be released and the case will return to the
-            queue.
         </confirmation-dialog>
     </section>
 </template>

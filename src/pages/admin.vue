@@ -167,9 +167,7 @@ function authenticationQueueRowClass(authenticationCase) {
 
 function authenticationCasePath(authenticationCase) {
     const publicId = encodeURIComponent(authenticationCase.public_id)
-    return authenticationCase.status === 'reviewing'
-        ? `/admin/authentication/${publicId}/review`
-        : `/admin/authentication/${publicId}`
+    return `/admin/authentication/${publicId}/review`
 }
 
 function clearAdminData() {

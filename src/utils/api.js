@@ -188,10 +188,6 @@ export const api = {
       })
     }
   },
-  startAuthenticationReview: (publicId) => request(`/admin/authentication-cases/${encodeURIComponent(publicId)}/start-review`, {
-    method: 'POST',
-    authenticated: true,
-  }),
   requestAuthenticationPhotos: (publicId) => request(`/admin/authentication-cases/${encodeURIComponent(publicId)}/request-more-photos`, {
     method: 'PATCH',
     authenticated: true,

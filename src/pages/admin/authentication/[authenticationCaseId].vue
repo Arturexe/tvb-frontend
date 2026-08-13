@@ -11,29 +11,16 @@ const router = useRouter()
 const authenticationCase = ref(null)
 const error = ref('')
 const isLoading = ref(true)
-const isStarting = ref(false)
-const isRequestingPhotos = ref(false)
-const isCompleting = ref(false)
-const result = ref('')
-const internalNotes = ref('')
-const isConfirming = ref(false)
-const isReturningToQueue = ref(false)
-const isReturnConfirming = ref(false)
-const photoLoadError = ref('')
+const isReopening = ref(false)
+const isReopenConfirming = ref(false)
 const isDownloadingCertificate = ref(false)
 const certificateDownloadError = ref('')
 const isCertificatePreviewOpen = ref(false)
 const isLoadingCertificatePreview = ref(false)
 const certificatePreviewCanvas = ref(null)
 
-const isReviewing = computed(
-    () => authenticationCase.value?.status === 'reviewing'
-)
 const isCompleted = computed(
     () => authenticationCase.value?.status === 'completed'
-)
-const canStartReview = computed(
-    () => !isReviewing.value && !isCompleted.value
 )
 const authenticationOutcome = computed(
     () => authenticationCase.value?.review || authenticationCase.value || {}
@@ -162,7 +149,6 @@ async function handleError(requestError) {
 async function loadAuthenticationCase(publicId) {
     error.value = ''
     authenticationCase.value = null
-    photoLoadError.value = ''
     certificateDownloadError.value = ''
     clearCertificatePreview()
     isLoading.value = true
@@ -176,7 +162,7 @@ async function loadAuthenticationCase(publicId) {
             ...caseForStaff,
             certificate: customerCase.certificate || null,
         }
-        if (isReviewing.value && !isReviewRoute.value) {
+        if (!isCompleted.value && !isReviewRoute.value) {
             await router.replace(reviewPath.value)
         }
     } catch (requestError) {
@@ -190,85 +176,22 @@ function clearCertificatePreview() {
     isCertificatePreviewOpen.value = false
 }
 
-async function startReview() {
-    error.value = ''
-    isStarting.value = true
-
-    try {
-        authenticationCase.value = await api.startAuthenticationReview(
-            authenticationCase.value.public_id
-        )
-        await router.push(reviewPath.value)
-    } catch (requestError) {
-        await handleError(requestError)
-    } finally {
-        isStarting.value = false
-    }
-}
-
-async function requestMorePhotos() {
-    error.value = ''
-    isRequestingPhotos.value = true
-
-    try {
-        authenticationCase.value = await api.requestAuthenticationPhotos(
-            authenticationCase.value.public_id
-        )
-    } catch (requestError) {
-        await handleError(requestError)
-    } finally {
-        isRequestingPhotos.value = false
-    }
-}
-
-function beginCompletion() {
-    error.value = ''
-
-    if (!result.value) {
-        error.value = 'Select an authentication result before completing.'
-        return
-    }
-
-    isConfirming.value = true
-}
-
-async function completeAuthentication() {
-    error.value = ''
-    isCompleting.value = true
-
-    try {
-        authenticationCase.value = await api.completeAuthenticationCase(
-            authenticationCase.value.public_id,
-            {
-                result: result.value,
-                internal_notes: internalNotes.value.trim() || null,
-            }
-        )
-        isConfirming.value = false
-    } catch (requestError) {
-        await handleError(requestError)
-    } finally {
-        isCompleting.value = false
-    }
-}
-
-async function returnToQueue() {
-    if (!isReviewing.value && !isCompleted.value) return
+async function reopenReview() {
+    if (!isCompleted.value) return
 
     error.value = ''
-    isReturningToQueue.value = true
-    const wasCompleted = isCompleted.value
+    isReopening.value = true
 
     try {
         authenticationCase.value = await api.returnAuthenticationCaseToQueue(
             authenticationCase.value.public_id
         )
-        isReturnConfirming.value = false
-        if (wasCompleted) await router.push('/admin')
+        isReopenConfirming.value = false
+        await router.push('/admin')
     } catch (requestError) {
         await handleError(requestError)
     } finally {
-        isReturningToQueue.value = false
+        isReopening.value = false
     }
 }
 
@@ -419,108 +342,8 @@ watch(
                 class="border border-red-200 bg-red-50 p-6 text-sm text-red-700">
                 {{ error }}
             </p>
-            <section v-else-if="authenticationCase && isReviewing">
-                <div class="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-                    <div>
-                        <p class="small-caps text-xs text-(--primary)">
-                            {{ formatStatus(authenticationCase.status) }}
-                        </p>
-                        <h2 class="font-display mt-1 text-3xl font-semibold">
-                            {{ itemLabel(authenticationCase) }}
-                        </h2>
-                        <p class="mt-1 text-sm text-(--muted-foreground)">
-                            {{ itemBrand(authenticationCase) }}
-                        </p>
-                    </div>
-                    <p class="font-mono text-xs text-(--muted-foreground)">
-                        {{ authenticationCase.public_id }}
-                    </p>
-                </div>
-
-                <div class="grid gap-8 xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.8fr)]">
-                    <review-photo-gallery
-                        :photos="resolvedPhotos"
-                        :error="photoLoadError"
-                        empty-message="No photographs are available for this case." />
-
-                    <section class="border border-(--border) bg-(--card) p-6">
-                        <h3 class="font-display text-xl font-semibold">
-                            Complete authentication
-                        </h3>
-                        <form class="mt-5" @submit.prevent="beginCompletion">
-                            <div class="grid gap-5">
-                                <label for="authentication-result">
-                                    <span
-                                        class="small-caps mb-2 block text-xs text-(--muted-foreground)">
-                                        Authentication result
-                                    </span>
-                                    <select
-                                        id="authentication-result"
-                                        v-model="result"
-                                        required
-                                        :disabled="isCompleting"
-                                        class="w-full border border-(--border) bg-(--background) px-4 py-3 text-sm disabled:opacity-60">
-                                        <option disabled value="">
-                                            Select a result
-                                        </option>
-                                        <option value="authentic">Authentic</option>
-                                        <option value="not_authentic">
-                                            Not authentic
-                                        </option>
-                                        <option value="inconclusive">
-                                            Inconclusive
-                                        </option>
-                                    </select>
-                                </label>
-                                <label for="internal-notes">
-                                    <span
-                                        class="small-caps mb-2 block text-xs text-(--muted-foreground)">
-                                        Internal notes
-                                        <span class="normal-case">(optional)</span>
-                                    </span>
-                                    <textarea
-                                        id="internal-notes"
-                                        v-model="internalNotes"
-                                        :disabled="isCompleting"
-                                        :maxlength="5000"
-                                        rows="7"
-                                        class="w-full resize-y border border-(--border) bg-(--background) px-4 py-3 text-sm disabled:opacity-60" />
-                                    <span
-                                        class="mt-1 block text-right text-xs text-(--muted-foreground)">
-                                        {{ internalNotes.length }} / 5,000
-                                    </span>
-                                </label>
-                            </div>
-                            <button
-                                :disabled="isStarting || isRequestingPhotos || isCompleting || isReturningToQueue"
-                                class="mt-6 w-full bg-(--primary) px-5 py-3 text-sm text-(--primary-foreground) disabled:opacity-60"
-                                type="submit">
-                                Review completion
-                            </button>
-                            <button
-                                type="button"
-                                :disabled="isStarting || isRequestingPhotos || isCompleting || isReturningToQueue"
-                                class="mt-3 w-full border border-(--border) px-5 py-3 text-sm text-(--primary) disabled:opacity-60"
-                                @click="requestMorePhotos">
-                                {{
-                                    isRequestingPhotos
-                                        ? 'Requesting...'
-                                        : 'Request more photos'
-                                }}
-                            </button>
-                            <button
-                                type="button"
-                                :disabled="isStarting || isRequestingPhotos || isCompleting || isReturningToQueue"
-                                class="mt-3 w-full border border-(--border) px-5 py-3 text-sm text-(--primary) disabled:opacity-60"
-                                @click="isReturnConfirming = true">
-                                Return to queue
-                            </button>
-                        </form>
-                    </section>
-                </div>
-            </section>
             <section
-                v-else-if="authenticationCase"
+                v-else-if="authenticationCase && isCompleted"
                 class="border border-(--border) bg-(--card)"
                 aria-labelledby="authentication-review-heading">
                 <div class="border-b border-(--border) px-6 py-5">
@@ -562,94 +385,7 @@ watch(
                     </div>
                 </div>
                 <div class="border-t border-(--border) p-6">
-                    <div v-if="!isCompleted" class="flex flex-wrap gap-3">
-                        <button
-                            v-if="canStartReview"
-                            :disabled="isStarting || isRequestingPhotos || isCompleting"
-                            class="bg-(--primary) px-5 py-3 text-sm text-(--primary-foreground) disabled:opacity-60"
-                            @click="startReview">
-                            {{ isStarting ? 'Starting...' : 'Start review' }}
-                        </button>
-                        <button
-                            v-if="isReviewing"
-                            :disabled="isStarting || isRequestingPhotos || isCompleting"
-                            class="border border-(--border) px-5 py-3 text-sm text-(--primary) disabled:opacity-60"
-                            @click="requestMorePhotos">
-                            {{
-                                isRequestingPhotos
-                                    ? 'Requesting...'
-                                    : 'Request more photos'
-                            }}
-                        </button>
-                        <button
-                            v-if="isReviewing"
-                            :disabled="isStarting || isRequestingPhotos || isCompleting || isReturningToQueue"
-                            class="border border-(--border) px-5 py-3 text-sm text-(--primary) disabled:opacity-60"
-                            @click="isReturnConfirming = true">
-                            Return to queue
-                        </button>
-                    </div>
-
-                    <form
-                        v-if="isReviewing"
-                        class="mt-8 border-t border-(--border) pt-8"
-                        @submit.prevent="beginCompletion">
-                        <h3 class="font-display text-xl font-semibold">
-                            Complete authentication
-                        </h3>
-                        <div class="mt-5 grid gap-5">
-                            <label for="authentication-result">
-                                <span
-                                    class="small-caps mb-2 block text-xs text-(--muted-foreground)">
-                                    Authentication result
-                                </span>
-                                <select
-                                    id="authentication-result"
-                                    v-model="result"
-                                    required
-                                    :disabled="isCompleting"
-                                    class="w-full border border-(--border) bg-(--background) px-4 py-3 text-sm disabled:opacity-60">
-                                    <option disabled value="">
-                                        Select a result
-                                    </option>
-                                    <option value="authentic">Authentic</option>
-                                    <option value="not_authentic">
-                                        Not authentic
-                                    </option>
-                                    <option value="inconclusive">
-                                        Inconclusive
-                                    </option>
-                                </select>
-                            </label>
-                            <label for="internal-notes">
-                                <span
-                                    class="small-caps mb-2 block text-xs text-(--muted-foreground)">
-                                    Internal notes
-                                    <span class="normal-case">(optional)</span>
-                                </span>
-                                <textarea
-                                    id="internal-notes"
-                                    v-model="internalNotes"
-                                    :disabled="isCompleting"
-                                    :maxlength="5000"
-                                    rows="5"
-                                    class="w-full resize-y border border-(--border) bg-(--background) px-4 py-3 text-sm disabled:opacity-60" />
-                                <span
-                                    class="mt-1 block text-right text-xs text-(--muted-foreground)">
-                                    {{ internalNotes.length }} / 5,000
-                                </span>
-                            </label>
-                        </div>
-                        <button
-                            :disabled="isStarting || isRequestingPhotos || isCompleting"
-                            class="mt-6 bg-(--primary) px-5 py-3 text-sm text-(--primary-foreground) disabled:opacity-60"
-                            type="submit">
-                            Review completion
-                        </button>
-                    </form>
-
                     <section
-                        v-if="isCompleted"
                         aria-labelledby="completed-authentication-heading">
                         <p class="small-caps text-xs text-(--primary)">
                             Review completed
@@ -720,9 +456,9 @@ watch(
                             </p>
                         </section>
                         <button
-                            :disabled="isReturningToQueue"
+                            :disabled="isReopening"
                             class="mt-6 border border-(--border) px-4 py-2 text-sm text-(--primary) disabled:opacity-60"
-                            @click="isReturnConfirming = true">
+                            @click="isReopenConfirming = true">
                             Reopen review
                         </button>
                     </section>
@@ -782,38 +518,14 @@ watch(
         </transition>
 
         <confirmation-dialog
-            :open="isConfirming"
-            title="Complete this authentication?"
-            confirm-label="Confirm completion"
-            busy-label="Completing..."
-            :busy="isCompleting"
-            @confirm="completeAuthentication"
-            @cancel="isConfirming = false">
-            The case will be completed as
-            <span class="font-medium text-(--foreground)">
-                {{ formatStatus(result) }}
-            </span>
-            .
-        </confirmation-dialog>
-        <confirmation-dialog
-            :open="isReturnConfirming"
-            :title="
-                isCompleted
-                    ? 'Reopen this authentication review?'
-                    : 'Return this authentication case to the queue?'
-            "
-            confirm-label="Confirm return"
-            :busy-label="isCompleted ? 'Reopening...' : 'Returning...'"
-            :busy="isReturningToQueue"
-            @confirm="returnToQueue"
-            @cancel="isReturnConfirming = false">
-            <template v-if="isCompleted">
-                The completed authentication will be returned to the open review queue.
-            </template>
-            <template v-else>
-                The active review will be released and the case will return to the
-                queue.
-            </template>
+            :open="isReopenConfirming"
+            title="Reopen this authentication case?"
+            confirm-label="Return to queue"
+            busy-label="Reopening..."
+            :busy="isReopening"
+            @confirm="reopenReview"
+            @cancel="isReopenConfirming = false">
+            The completed authentication will be returned to the open queue.
         </confirmation-dialog>
     </section>
     <router-view v-else />
