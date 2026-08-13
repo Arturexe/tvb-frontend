@@ -1,11 +1,12 @@
 <script setup>
 import DefaultLayout from './layouts/default.vue'
 import { apiState } from './utils/api.js'
+import { navigationState } from './utils/router.js'
 // import PageLayout from './layouts/page.vue'
 
 const route = useRoute()
 const layout = shallowRef()
-const isPending = computed(() => apiState.pendingRequests > 0)
+const isPending = computed(() => apiState.pendingRequests > 0 || navigationState.pending)
 const showPending = ref(false)
 
 watch(
@@ -18,7 +19,7 @@ watch(
 
         const timer = window.setTimeout(() => {
             showPending.value = true
-        }, 50)
+        }, 500)
 
         onCleanup(() => window.clearTimeout(timer))
     },

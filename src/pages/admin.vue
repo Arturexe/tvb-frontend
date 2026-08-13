@@ -349,7 +349,7 @@ watch(
                             v-for="request in openValuationRequests"
                             :key="request.public_id"
                             class="block w-full border-b border-(--border) px-5 py-4 text-left last:border-0 hover:bg-(--secondary)"
-                            @click="router.push(`/admin/valuation/${encodeURIComponent(request.public_id)}`)">
+                            @click="router.push(`/admin/valuation/${encodeURIComponent(request.public_id)}/review`)">
                             <span
                                 class="flex items-start justify-between gap-4">
                                 <span>

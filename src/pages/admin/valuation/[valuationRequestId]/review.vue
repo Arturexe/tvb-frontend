@@ -115,7 +115,10 @@ async function loadValuationRequest(publicId) {
     isLoading.value = true
 
     try {
-        valuationRequest.value = await api.getAdminValuationRequest(publicId)
+        const request = await api.getAdminValuationRequest(publicId)
+        valuationRequest.value = request.status === 'queued'
+            ? await api.startValuationReview(request.public_id)
+            : request
         marketValueCurrency.value =
             valuationRequest.value.service?.currency ||
             valuationRequest.value.currency ||
