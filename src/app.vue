@@ -19,7 +19,7 @@ watch(
 
         const timer = window.setTimeout(() => {
             showPending.value = true
-        }, 500)
+        }, 100)
 
         onCleanup(() => window.clearTimeout(timer))
     },
