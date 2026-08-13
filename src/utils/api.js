@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+const apiBaseUrl = (import.meta.env.BACKEND_URL || '').replace(/\/$/, '')
 const authStorageKey = 'tvb.auth'
 const caseAccessStoragePrefix = 'tvb.case-access.'
 const knownCasesStorageKey = 'tvb.authentication-cases'
@@ -38,7 +38,7 @@ export class ApiError extends Error {
 
 function requireApiBaseUrl() {
   if (!apiBaseUrl) {
-    throw new Error('VITE_API_BASE_URL is not configured.')
+    throw new Error('BACKEND_URL is not configured.')
   }
 }
 

@@ -1,5 +1,12 @@
-# Vue 3 + Vite
+# The Verified Bag Frontend
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## Backend URL
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+The frontend reads `BACKEND_URL` at build time. It must be the full Laravel API base URL, including `/api/v1`.
+
+- Local development: use `http://localhost:8000/api/v1`. Vite derives its local proxy from this value so the browser continues using a same-origin `/api/v1` request.
+- Vercel production: use the deployed API base URL, for example `https://api.example.com/api/v1`.
+
+For Vercel, configure `BACKEND_URL` for Production and Preview. Vite's development server and its proxy are not used in a Vercel deployment.
+
+The deployed backend must allow the Vercel frontend origin in its CORS configuration. Do not place credentials or secrets in `BACKEND_URL`.
