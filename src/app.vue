@@ -37,7 +37,7 @@ watch(
             leave-to-class="opacity-0">
             <div
                 v-if="showPending"
-                class="fixed inset-0 z-[60] grid place-items-center bg-(--background)/55 backdrop-blur-sm"
+                class="fixed inset-0 z-[80] grid place-items-center bg-(--background)/55 backdrop-blur-sm"
                 role="status"
                 aria-live="polite"
                 aria-label="Loading">
