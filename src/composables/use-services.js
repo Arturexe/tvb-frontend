@@ -16,7 +16,7 @@ function normalizeService(service) {
     label: service.display_name,
     price: formatMinorPrice(service.price_minor, service.currency),
     time: presentation.time || (service.express ? 'Priority authentication' : 'Authentication service'),
-    description: service.description || presentation.description,
+    description: presentation.description || service.description,
     features: presentation.features || [],
   }
 }

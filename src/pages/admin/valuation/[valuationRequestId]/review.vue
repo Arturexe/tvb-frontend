@@ -18,8 +18,6 @@ const error = ref('')
 const isLoading = ref(true)
 const isCompleting = ref(false)
 const isConfirming = ref(false)
-const isReturningToQueue = ref(false)
-const isReturnConfirming = ref(false)
 const photoLoadError = ref('')
 
 const isReviewing = computed(
@@ -64,7 +62,9 @@ const photos = computed(() => {
                       source.content_url ||
                       source.contentUrl ||
                       '',
-                  label: source.category || `Photograph ${index + 1}`,
+                  label: source.category === 'other'
+                      ? 'Photograph'
+                      : source.category || `Photograph ${index + 1}`,
                   }
               })
         : []
@@ -171,27 +171,6 @@ async function completeReview() {
         await handleError(requestError)
     } finally {
         isCompleting.value = false
-    }
-}
-
-async function returnToQueue() {
-    if (!isReviewing.value) return
-
-    error.value = ''
-    isReturningToQueue.value = true
-
-    try {
-        valuationRequest.value = await api.returnValuationRequestToQueue(
-            valuationRequest.value.public_id
-        )
-        isReturnConfirming.value = false
-        await router.push(
-            `/admin/valuation/${encodeURIComponent(valuationRequest.value.public_id)}`
-        )
-    } catch (requestError) {
-        await handleError(requestError)
-    } finally {
-        isReturningToQueue.value = false
     }
 }
 
@@ -348,17 +327,10 @@ watch(
                                 </label>
                             </div>
                             <button
-                                :disabled="isCompleting || isReturningToQueue"
+                                :disabled="isCompleting"
                                 class="mt-6 w-full bg-(--primary) px-5 py-3 text-sm text-(--primary-foreground) disabled:opacity-60"
                                 type="submit">
                                 Review completion
-                            </button>
-                            <button
-                                type="button"
-                                :disabled="isCompleting || isReturningToQueue"
-                                class="mt-3 w-full border border-(--border) px-5 py-3 text-sm text-(--primary) disabled:opacity-60"
-                                @click="isReturnConfirming = true">
-                                Return to queue
                             </button>
                         </form>
                         <p
@@ -413,17 +385,5 @@ watch(
             </span>
             .
         </confirmation-dialog>
-        <confirmation-dialog
-            :open="isReturnConfirming"
-            title="Return this valuation to the queue?"
-            confirm-label="Confirm return"
-            busy-label="Returning..."
-            :busy="isReturningToQueue"
-            @confirm="returnToQueue"
-            @cancel="isReturnConfirming = false">
-            The active review will be released and the valuation will return to
-            the queue.
-        </confirmation-dialog>
-
     </section>
 </template>

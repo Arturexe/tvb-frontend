@@ -11,12 +11,50 @@ const error = ref('')
 const isLoading = ref(true)
 const isCompleting = ref(false)
 const isConfirming = ref(false)
-const isRequestingPhotos = ref(false)
 const photoLoadError = ref('')
+const photoCategoryLabels = {
+    front: 'Front',
+    back: 'Back',
+    side: 'Side',
+    bottom: 'Bottom',
+    hardware: 'Hardware',
+    heat_stamp: 'Heat Stamp',
+    serial_number: 'Serial #',
+    microchip: 'Microchip',
+    handles: 'Handles',
+    overview: 'Overview',
+    logo: 'Logo',
+    interior: 'Interior',
+    pocket: 'Pocket',
+    canvas: 'Canvas',
+    additional: 'Additional Photograph',
+    other: 'Other',
+}
+const requiredPhotoCategories = [
+    'front',
+    'back',
+    'side',
+    'bottom',
+    'hardware',
+    'heat_stamp',
+    'serial_number',
+    'microchip',
+    'handles',
+    'overview',
+    'logo',
+    'interior',
+    'pocket',
+    'canvas',
+]
 
 const isCompleted = computed(
     () => authenticationCase.value?.status === 'completed'
 )
+
+function formatPhotoCategory(category, index) {
+    return photoCategoryLabels[category] || `Photograph ${index + 1}`
+}
+
 const photos = computed(() => {
     const record = authenticationCase.value || {}
     const collection = [
@@ -53,11 +91,21 @@ const photos = computed(() => {
                 source.content_url ||
                 source.contentUrl ||
                 '',
-            label: source.category || `Photograph ${index + 1}`,
+            category: source.category || '',
+            label: formatPhotoCategory(source.category, index),
         }
     })
 })
 const resolvedPhotos = computed(() => photos.value.filter((photo) => photo.url))
+const missingPhotoCategories = computed(() => {
+    const uploadedCategories = new Set(
+        photos.value.map((photo) => photo.category).filter(Boolean)
+    )
+
+    return requiredPhotoCategories.filter(
+        (category) => !uploadedCategories.has(category)
+    )
+})
 
 function formatStatus(status) {
     return (
@@ -136,21 +184,6 @@ async function completeAuthentication() {
         await handleError(requestError)
     } finally {
         isCompleting.value = false
-    }
-}
-
-async function requestMorePhotos() {
-    error.value = ''
-    isRequestingPhotos.value = true
-
-    try {
-        authenticationCase.value = await api.requestAuthenticationPhotos(
-            authenticationCase.value.public_id
-        )
-    } catch (requestError) {
-        await handleError(requestError)
-    } finally {
-        isRequestingPhotos.value = false
     }
 }
 
@@ -243,10 +276,35 @@ watch(
                 </div>
 
                 <div class="grid gap-8 xl:grid-cols-[minmax(0,1.55fr)_minmax(20rem,0.8fr)]">
-                    <review-photo-gallery
-                        :photos="resolvedPhotos"
-                        :error="photoLoadError"
-                        empty-message="No photographs are available for this case." />
+                    <div>
+                        <review-photo-gallery
+                            :photos="resolvedPhotos"
+                            :error="photoLoadError"
+                            empty-message="No photographs are available for this case." />
+                        <section
+                            v-if="missingPhotoCategories.length"
+                            class="mt-6 border border-(--border) bg-(--secondary) p-5">
+                            <div class="flex items-baseline justify-between gap-4">
+                                <h3 class="font-display text-base font-semibold">
+                                    Missing photographs
+                                </h3>
+                                <span class="font-sans-dm text-xs text-(--muted-foreground)">
+                                    {{ missingPhotoCategories.length }}
+                                </span>
+                            </div>
+                            <p class="mt-1 font-sans-dm text-xs leading-5 text-(--muted-foreground)">
+                                Not included with this submission.
+                            </p>
+                            <ul class="mt-4 flex flex-wrap gap-2">
+                                <li
+                                    v-for="category in missingPhotoCategories"
+                                    :key="category"
+                                    class="border border-(--border) bg-(--card) px-2.5 py-1 font-sans-dm text-xs text-(--muted-foreground)">
+                                    {{ photoCategoryLabels[category] }}
+                                </li>
+                            </ul>
+                        </section>
+                    </div>
 
                     <section class="border border-(--border) bg-(--card) p-6">
                         <h3 class="font-display text-xl font-semibold">
@@ -297,21 +355,10 @@ watch(
                                 </label>
                             </div>
                             <button
-                                :disabled="isCompleting || isRequestingPhotos"
+                                :disabled="isCompleting"
                                 class="mt-6 w-full bg-(--primary) px-5 py-3 text-sm text-(--primary-foreground) disabled:opacity-60"
                                 type="submit">
                                 Review completion
-                            </button>
-                            <button
-                                type="button"
-                                :disabled="isCompleting || isRequestingPhotos"
-                                class="mt-3 w-full border border-(--border) px-5 py-3 text-sm text-(--primary) disabled:opacity-60"
-                                @click="requestMorePhotos">
-                                {{
-                                    isRequestingPhotos
-                                        ? 'Requesting...'
-                                        : 'Request more photos'
-                                }}
                             </button>
                         </form>
                     </section>

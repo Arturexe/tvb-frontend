@@ -1,20 +1,22 @@
 export const servicePresentation = {
   'quick-opinion': {
-    time: 'Informal verdict, no certificate',
+    time: 'Informal expert verdict',
+    description: 'Fast informal expert verdict',
     features: ['Fast expert opinion', 'Written verdict via email'],
   },
   'heritage-code': {
     time: 'Authentication + Digital Certificate',
-    description: 'For Louis Vuitton items with traditional date codes',
+    description: 'For traditional date code items',
     features: ['Full expert authentication', 'Digital certificate (PDF)', 'Unique certificate number', 'QR verification code'],
   },
   'digital-era': {
     time: 'Authentication + Digital Certificate',
-    description: 'For newer Louis Vuitton items from the microchip era',
+    description: 'For newer microchip-era items',
     features: ['Full expert authentication', 'Digital certificate (PDF)', 'Unique certificate number', 'QR verification code', 'Detailed findings report'],
   },
   express: {
     time: 'Authentication + Certificate',
+    description: 'Priority review with certificate',
     features: ['Priority queue placement', 'Full expert authentication', 'Digital certificate (PDF)', 'Unique certificate number', 'QR verification code', 'Detailed findings report'],
   },
   'market-valuation': {

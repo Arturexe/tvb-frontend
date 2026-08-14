@@ -7,6 +7,12 @@ const { services, loading, error, loadServices } = useServices()
 const authenticationServices = computed(() => services.value.filter((service) => service.kind === 'authentication'))
 const valuationService = computed(() => services.value.find((service) => service.slug === 'market-valuation'))
 
+function selectService(service) {
+  if (!service?.slug) return
+
+  router.push({ name: 'authenticate', query: { tier: service.slug } })
+}
+
 onMounted(() => {
   loadServices().catch(() => { })
 })
@@ -21,5 +27,5 @@ onMounted(() => {
       Please try again shortly.</p>
   </section>
   <pricing-plans v-else-if="valuationService" :services="authenticationServices" :valuation-service="valuationService"
-    @select-service="router.push({ name: 'authenticate' })" />
+    @select-service="selectService" />
 </template>

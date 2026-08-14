@@ -59,13 +59,13 @@ const faqs = [
           </p>
           <p class="font-display text-3xl font-semibold">EUR 0.99</p>
           <p class="mt-1 font-sans-dm text-sm text-(--muted-foreground)">
-            A fast informal expert verdict. No certificate is issued.
+            A fast informal expert verdict.
           </p>
         </div>
         <app-button
           variant="goldOutline"
           class="shrink-0 px-7 py-3"
-          @click="$emit('select-service')"
+          @click="$emit('select-service', services[0])"
           >Get Quick Opinion</app-button
         >
       </div>
@@ -73,45 +73,35 @@ const faqs = [
         <article
           v-for="service in services.slice(1)"
           :key="service.id"
-          class="relative border-b border-(--border) p-10 last:border-0 md:border-b-0 md:border-r md:last:border-0"
+          class="relative flex flex-col border-b border-(--border) p-10 last:border-0 md:border-b-0 md:border-r md:last:border-0"
           :class="
-            service.id === 'digital-era'
+            service.id === 'express'
               ? 'bg-(--primary) text-(--primary-foreground)'
               : 'bg-(--card)'
           "
         >
           <span
-            v-if="service.id === 'digital-era'"
+            v-if="service.id === 'express'"
             class="absolute right-4 top-4 bg-(--card) px-2.5 py-1 font-sans-dm text-[10px] tracking-widest text-(--primary)"
             >MOST POPULAR</span
           >
           <p
             class="small-caps mb-3 font-sans-dm text-xs"
             :class="
-              service.id === 'digital-era'
+              service.id === 'express'
                 ? 'text-[rgba(250,247,241,.65)]'
                 : 'text-(--primary)'
             "
           >
             {{ service.label }}
           </p>
-          <p class="mb-1 font-display text-5xl font-semibold">
+          <p class="mb-5 font-display text-5xl font-semibold">
             {{ service.price }}
           </p>
           <p
-            class="mb-8 font-sans-dm text-xs"
-            :class="
-              service.id === 'digital-era'
-                ? 'text-[rgba(250,247,241,.65)]'
-                : 'text-(--muted-foreground)'
-            "
-          >
-            per item, {{ service.time }}
-          </p>
-          <p
             v-if="service.description"
-            class="-mt-4 mb-8 font-sans-dm text-xs italic leading-5"
-            :class="service.id === 'digital-era' ? 'text-[rgba(250,247,241,.85)]' : 'text-(--muted-foreground)'"
+            class="mb-8 font-sans-dm text-sm leading-5"
+            :class="service.id === 'express' ? 'text-[rgba(250,247,241,.85)]' : 'text-(--muted-foreground)'"
           >
             {{ service.description }}
           </p>
@@ -121,24 +111,24 @@ const faqs = [
               :key="feature"
               class="flex gap-3 font-sans-dm text-sm"
               :class="
-                service.id === 'digital-era'
+                service.id === 'express'
                   ? 'text-[rgba(250,247,241,.85)]'
                   : 'text-(--muted-foreground)'
               "
             >
               <i
                 class="mt-1.5 h-1.5 w-1.5 shrink-0 rotate-45 bg-(--primary)"
-                :class="service.id === 'digital-era' ? 'bg-(--card)' : ''"
+                :class="service.id === 'express' ? 'bg-(--card)' : ''"
               />{{ feature }}
             </li>
           </ul>
           <app-button
             :variant="
-              service.id === 'digital-era' ? 'outline' : 'goldOutline'
+              service.id === 'express' ? 'outline' : 'goldOutline'
             "
-            class="w-full py-3"
+            class="mt-auto w-full py-3"
             :class="
-              service.id === 'digital-era'
+              service.id === 'express'
                 ? 'border-[rgba(250,247,241,.6)] text-(--primary-foreground)'
                 : ''
             "
